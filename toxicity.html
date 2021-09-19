@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>Text Toxicity</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.teal-red.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+    #view-source {
+      position: fixed;
+      display: block;
+      right: 0;
+      bottom: 0;
+      margin-right: 40px;
+      margin-bottom: 40px;
+      z-index: 900;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="demo-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
+      
+      <div class="demo-ribbon"></div>
+      <main class="demo-main mdl-layout__content">
+        <div class="demo-container mdl-grid">
+          <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
+          <div class="demo-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+            <h3>NON-TOXIC FORUM</h3>
+            <div class="mdl-grid" style="min-height: 400px;">
+              <div class="mdl-cell mdl-cell--6-col">
+            <form action="#">
+              <br/>
+              <br/>
+              <div class="mdl-textfield mdl-js-textfield">
+                <input id="txt" class="mdl-textfield__input" type="text" id="sample1">
+                <label class="mdl-textfield__label" for="sample1">write you comment ...</label>
+              </div>
+            </form>
+            <button id="btn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+              Button
+            </button>
+            <div class="result"></div>
+          </div>
+          <div class="mdl-cell mdl-cell--6-col"><img id="slime" style="display: none;" src="slime.png" width="70%"/></div>
+          </div>
+            
+          </div>
+        </div>
+      </main>
+    </div>
+    
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/tasks@0.0.1-alpha.8"></script>
+    <script>
+      async function start() {
+        const slime = document.querySelector("#slime");
+        const textarea = document.querySelector("#txt");
+        const button = document.querySelector("#btn");
+        const resultDiv = document.querySelector(".result");
+      
+        // Load the TFLite model.
+        const model = await tfTask.NLClassification.CustomModel.TFLite.load({
+          model:
+            "model_toxicity.tflite"
+        });
+      
+        var timeout = null;
+        var delay = async function(){
+          var timer = 0;
+          return function(callback, ms){
+            clearTimeout (timer);
+            timer = setTimeout(callback, ms);
+          };
+        };
+      
+        document.querySelector("#btn").addEventListener("click", async () => {
+          // Get the classification result for the entered text
+          const result = await model.predict(textarea.value);
+      
+          // Show the results.
+          resultDiv.textContent = result.classes
+            .map((c) => `${c.className}: ${c.score.toFixed(3)}`)
+            .join(", ");
+        });
+      
+        document.querySelector("#txt").addEventListener("keyup", async () => {
+          clearTimeout(timeout);
+          timeout = setTimeout(async () => {
+            const result = await model.predict(textarea.value);
+            if(result.classes[1].score>0.7){
+              slime.style.display = "block";
+              button.disabled = true;
+            }
+            else {
+              slime.style.display = "none";
+              button.disabled = false;
+            }
+            resultDiv.textContent = result.classes.map((c) => `${c.className}: ${c.score.toFixed(3)}`).join(", ");
+          }, 1000);
+        });
+      }
+      
+      start();
+          </script>
+  </body>
+</html>
