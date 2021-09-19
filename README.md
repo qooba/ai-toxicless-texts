@@ -1,6 +1,9 @@
 Project which helps to detect texts toxicity.
 
+Run example:
 ```bash
+git clone https://github.com/qooba/ai-toxicless-texts.git
+cd ai-toxicless-texts
 python3 -m http.server
 ```
 
